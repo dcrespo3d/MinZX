@@ -5,6 +5,8 @@ This is a minimalistic and incomplete emulator written for learning the architec
 
 It has a small code base which makes it easy to understand.
 
+[Try it here](https://dcrespo3d.github.io/MinZX/index.html). Keyboard required, not for mobile.
+
 ![MinZX](./docs/MinZX.png)
 
 ## Features
