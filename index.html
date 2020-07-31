@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="Z80.js"></script>
+    <script src="utils.js"></script>
+    <script src="MinZX.js"></script>
+    <script src="ZXScreenAsImageData.js"></script>
+    <script src="ZXKeyboard.js"></script>
+    <title>MinZX - Minimalistic ZX Spectrum 48K emulator</title>
+    <script>
+/**/
+
+let minzx = null;
+
+window.addEventListener('load', function() {
+    minzx = new MinZX();
+    minzx.start();
+
+    const btnLoadSnaFile = document.getElementById('btnLoadSnaFile');
+    btnLoadSnaFile.addEventListener('click', function() {
+        loadLocalFile(function(data) {
+            minzx.loadSNA(data);
+        });
+    });
+});
+
+/**/
+    </script>
+    <style>
+body {
+    background: #CCC;
+}
+
+    </style>
+</head>
+<body>
+    <p>MinZX - Minimalistic ZX Spectrum 48K emulator</p>
+    <p>Developed in 2020 by <a href="https://github.com/dcrespo3d/MinZX">DCrespo</a></p>
+    <canvas id=zxscr></canvas>
+    <br/>
+    <button id=btnLoadSnaFile>Load Snapshot...</button>
+    </div>
+</body>
+</html>
