@@ -34,7 +34,9 @@ class MinZX
     }
 
     mem_write(addr,val) {
-        this.mem[addr] = val;
+        // make ROM read-only
+        if (addr >= 0x4000)
+            this.mem[addr] = val;
     }
 
     io_read(port) {
@@ -143,8 +145,8 @@ class MinZX
         state.d       = data[0x0C];
         state.c       = data[0x0D];
         state.b       = data[0x0E];
-        state.ix      = this._makeWord(data[0x0F], data[0x10]);
-        state.iy      = this._makeWord(data[0x11], data[0x12]);
+        state.iy      = this._makeWord(data[0x0F], data[0x10]);
+        state.ix      = this._makeWord(data[0x11], data[0x12]);
         state.iff2    = data[0x13];
         state.r       = data[0x14];
         state.f       = data[0x15];
