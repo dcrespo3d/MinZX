@@ -50,7 +50,11 @@ class MinZX
         // TBD
     }
 
-    loadByteArray(arr, org) {
+    reset() {
+        this.cpu.reset();
+    }
+
+    loadMemory(arr, org) {
         org = org || 0;
         for (let i = 0; i < arr.length; i++) {
             this.mem[org+i] = arr[i];
@@ -179,19 +183,20 @@ class MinZX
         this._flashperiod = 320;
 
         // load ROM and start animation when ROM loaded
-        const that = this;
+        const self = this;
         loadRemoteBinaryFile('zx48.rom', function(data) {
             console.log('Loaded ZX Spectrum ROM: ' + data.length + ' bytes');
-            that.loadByteArray(data);
-            that._requestAnimation();
+            self._rom = data;
+            self.loadMemory(data);
+            self._requestAnimation();
         });
     }
 
     _requestAnimation()
     {
-        const that = this;
+        const self = this;
         requestAnimationFrame(function(time) {
-            that._onAnimationFrame(time);
+            self._onAnimationFrame(time);
         });
     }
 

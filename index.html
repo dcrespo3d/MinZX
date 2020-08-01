@@ -25,13 +25,18 @@ window.addEventListener('load', function() {
             minzx.loadSNA(data);
         });
     });
+
+    const btnReset = document.getElementById('btnReset');
+    btnReset.addEventListener('click', function() {
+        minzx.reset();
+    });
 });
 
 /**/
     </script>
     <style>
 body {
-    background: #CCC;
+    background: #DDD;
     font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -43,6 +48,7 @@ body {
     <canvas id=zxscr></canvas>
     <br/><br/>
     <button id=btnLoadSnaFile>Load Snapshot...</button>
+    <button id=btnReset>Reset</button>
     </div>
 </body>
 </html>
