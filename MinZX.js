@@ -40,7 +40,7 @@ class MinZX
             this.mem[i] = 0;
 
         // create screen helper object
-        this._createScreen(canvasIdForScreen);
+        this._screen = new ZXScreen(canvasIdForScreen);
 
        // create keyboard helper object, receiving events from window
         this._keyb = new ZXKeyboard(window);
@@ -93,7 +93,7 @@ class MinZX
         // ULA responds to any even address
         if ((port & 1) == 0) {
             // border is set with lower 3 bits of value
-            this._border = val & 0x07;
+            this._screen.border = val & 0x07;
         }
             
     }
@@ -101,61 +101,6 @@ class MinZX
     // reset the processor
     reset() {
         this.cpu.reset();
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // Screen: image from memory at graphic memory area
-    ////////////////////////////////////////////////////////////////////////////////
-
-    _createScreen(canvasIdForScreen)
-    {
-        // initial border color: white
-        this._border = 7;
-
-        // scale factor
-        this.scale = 2;
-
-        // create canvas and context
-        this.canvas = document.getElementById(canvasIdForScreen);
-        this.ctx = this.canvas.getContext('2d');
-
-        // create image data for screeen, with given border
-        const xborder = 32;
-        const yborder = 24;
-        this.zxid = new ZXScreenAsImageData(this.ctx, xborder, yborder);
-
-        // resize canvas using screen and scale
-        this.canvas.width  = this.zxid.getWidth()  * this.scale;
-        this.canvas.height = this.zxid.getHeight() * this.scale;
-
-        // we want pixels!
-        this.ctx.imageSmoothingEnabled = false;
-;
-    }
-
-    _updateScreen()
-    {
-        // create array for screen memory, and fill it from graphic memory zone
-        const off = 0x4000;
-        const scrlen = 6912;
-        const scr = new Uint8Array(scrlen);
-        for (let i = 0; i < scrlen; i++)
-            scr[i] = this.mem[off + i];
-
-        // generate image data from array, border and flash state
-        this.zxid.putSpectrumImage(scr, this._border, this._flashstate);
-
-        // set identity transform for removing previous scale factor
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-        // Draw the image data to the canvas at 1:1 scale
-        this.ctx.fillStyle = 'black';
-        this.ctx.fillRect(0, 0, 100, 100);
-        this.ctx.putImageData(this.zxid.imgdata, 0, 0);
-
-        // Draw canvas onto itself using scale factor
-        this.ctx.scale(this.scale, this.scale);
-        this.ctx.drawImage(this.canvas, 0, 0);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -203,7 +148,7 @@ class MinZX
         this.cpu.setState(state);
 
         // last byte holds border state
-        this._border  = data[0x1A];
+        this._screen.border  = data[0x1A];
  
         // copy 48KB of data from snapshot to RAM memory
         const datalen = 0xC000; // 48K
@@ -311,7 +256,7 @@ class MinZX
             }
 
             // redraw screen
-            this._updateScreen();
+            this._screen.update(this.mem, this._flashstate);
 
             // emit maskable interrupt to wake up CPU from halted state
             this.cpu.interrupt(false, 0);

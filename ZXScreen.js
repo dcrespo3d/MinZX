@@ -16,6 +16,59 @@
 // Documentation for spectrum screen:
 // http://www.breakintoprogram.co.uk/computers/zx-spectrum/screen-memory-layout
 
+class ZXScreen
+{
+    constructor(canvasIdForScreen)
+    {
+        // initial border color: white
+        this.border = 7;
+
+        // scale factor
+        this.scale = 2;
+
+        // create canvas and context
+        this.canvas = document.getElementById(canvasIdForScreen);
+        this.ctx = this.canvas.getContext('2d');
+
+        // create image data for screeen, with given border
+        const xborder = 32;
+        const yborder = 24;
+        this.zxid = new ZXScreenAsImageData(this.ctx, xborder, yborder);
+
+        // resize canvas using screen and scale
+        this.canvas.width  = this.zxid.getWidth()  * this.scale;
+        this.canvas.height = this.zxid.getHeight() * this.scale;
+
+        // we want pixels! do not smooth them, please
+        this.ctx.imageSmoothingEnabled = false;
+    }
+
+    update(mem, flashstate)
+    {
+        // copy screen memory
+        const off = 0x4000;
+        const scrlen = 6912;
+        const scr = new Uint8Array(scrlen);
+        for (let i = 0; i < scrlen; i++)
+            scr[i] = mem[off + i];
+
+        // generate image data from array, border and flash state
+        this.zxid.putSpectrumImage(scr, this.border, flashstate);
+
+        // set identity transform for removing previous scale factor
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        // Draw the image data to the canvas at 1:1 scale
+        this.ctx.fillStyle = 'black';
+        this.ctx.fillRect(0, 0, 100, 100);
+        this.ctx.putImageData(this.zxid.imgdata, 0, 0);
+
+        // Draw canvas onto itself using scale factor
+        this.ctx.scale(this.scale, this.scale);
+        this.ctx.drawImage(this.canvas, 0, 0);
+    }
+}
+
 // ZX Spectrum colors. Using 192 for non-bright value, 255 for bright value.
 const zxcolors = [
     [  0,   0,   0, 255],
