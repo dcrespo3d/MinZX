@@ -152,10 +152,11 @@ class MinZX
         state.f       = data[0x15];
         state.a       = data[0x16];
         state.sp      = this._makeWord(data[0x17], data[0x18]);
+        state.imode   = data[0x19];
         this.cpu.setState(state);
 
-        // TODO: border
-        const border  = data[0x19];
+        this._border  = data[0x1A];
+        console.log(this._border);
 
         // copy 48Kb memory
         const datalen = 0xC000; // 48K
