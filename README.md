@@ -11,7 +11,7 @@ It has a small code base which makes it easy to understand.
 
 ## Features
 - ZX Spectrum 48K emulation with original ROM.
-- Screen emulation with BRIGHT attribute (but no FLASH yet).
+- Screen emulation with BRIGHT and FLASH attributes.
 - Keyboard emulation, from DOM keydown/keyup events.
 - SNA snapshot loading from local filesystem (can play Manic Miner and Jet Set Willy - not included).
 

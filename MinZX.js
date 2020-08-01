@@ -2,12 +2,12 @@ class MinZX
 {
     constructor()
     {
-        let lx82 = this;
-        var core = {
-            mem_read  : function(addr)     { return lx82.mem_read (addr)    ; },
-            mem_write : function(addr,val) {        lx82.mem_write(addr,val); },
-            io_read   : function(port)     { return lx82.io_read  (port)    ; },
-            io_write  : function(port,val) {        lx82.io_write (port,val); },
+        const self = this;
+        const core = {
+            mem_read  : function(addr)     { return self.mem_read (addr)    ; },
+            mem_write : function(addr,val) {        self.mem_write(addr,val); },
+            io_read   : function(port)     { return self.io_read  (port)    ; },
+            io_write  : function(port,val) {        self.io_write (port,val); },
         };
 
         this.cpu = new Z80(core);
@@ -81,7 +81,7 @@ class MinZX
         let scr = new Uint8Array(scrlen);
         for (let i = 0; i < scrlen; i++)
             scr[i] = this.mem[off + i];
-        this.zxid.putSpectrumImage(scr);
+        this.zxid.putSpectrumImage(scr, 0, this._flashstate);
 
         this._drawScreen();
 
@@ -174,6 +174,10 @@ class MinZX
         // accumulated time, for emitting interrupt once per frame
         this._accumtime = this._frametime;
 
+        this._flashstate = false;
+        this._flashtime = 0;
+        this._flashperiod = 320;
+
         // load ROM and start animation when ROM loaded
         const that = this;
         loadRemoteBinaryFile('zx48.rom', function(data) {
@@ -219,7 +223,7 @@ class MinZX
     _onDrawFrame(time, deltatime)
     {
         this._accumtime += deltatime;
-        while (this._accumtime > this._frametime)
+        while (this._accumtime >= this._frametime)
         {
             let numCycles = 0;
             let maxCycles = this._cpufreq * this._frametime;
@@ -232,6 +236,12 @@ class MinZX
                 }    
             }
             
+            this._flashtime += this._frametime;
+            if (this._flashtime >= this._flashperiod) {
+                this._flashtime -= this._flashperiod;
+                this._flashstate = !this._flashstate;
+            }
+
             this.updateScreen();
 
             this.cpu.interrupt(false, 0);
