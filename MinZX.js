@@ -1,115 +1,159 @@
+///////////////////////////////////////////////////////////////////////////////
+/// @file MinZX.js
+///
+/// @brief Main class for the MinZX 48K Spectrum emulator
+///
+/// @author David Crespo Tascon
+///
+/// @copyright (c) David Crespo Tascon
+///  This code is released under the MIT license,
+///  a copy of which is available in the associated LICENSE file,
+///  or at http://opensource.org/licenses/MIT
+///////////////////////////////////////////////////////////////////////////////
+
+"use strict";
+
 class MinZX
 {
-    constructor()
+    constructor(canvasIdForScreen)
     {
         const self = this;
+
+        // core is a set of callbacks passed to the Z80 emulator
+        // for giving an environment to the processor:
+        // - a memory space for reading / writing
+        // - I/O ports for reading / writing
         const core = {
-            mem_read  : function(addr)     { return self.mem_read (addr)    ; },
-            mem_write : function(addr,val) {        self.mem_write(addr,val); },
-            io_read   : function(port)     { return self.io_read  (port)    ; },
-            io_write  : function(port,val) {        self.io_write (port,val); },
+            mem_read  : function(addr)     { return self._mem_read (addr)    ; },
+            mem_write : function(addr,val) {        self._mem_write(addr,val); },
+            io_read   : function(port)     { return self._io_read  (port)    ; },
+            io_write  : function(port,val) {        self._io_write (port,val); },
         };
 
+        // create the Z80 emulator object
         this.cpu = new Z80(core);
 
+        // create a byte array for holding 64 KB of memory
+        // and initialize it to zero
         this.mem = new Uint8Array(65536);
         for (let i = 0; i < 63336; i++)
             this.mem[i] = 0;
 
-        this._createScreen();
+        // create screen helper object
+        this._createScreen(canvasIdForScreen);
 
+       // create keyboard helper object, receiving events from window
         this._keyb = new ZXKeyboard(window);
 
-        this._border = 5;
+        // initially not started
+        this._started = false;
+    }
 
-     }
+    start()
+    {
+        // don't start more than once
+        if (this._started) return;
+
+        this._start();
+    }
 
     ////////////////////////////////////////////////////////////////////////////////
     // CORE: memory R/W, ports R/W
     ////////////////////////////////////////////////////////////////////////////////
 
-    mem_read(addr) {
+    // read from memory at address addr, return byte at that position
+    _mem_read(addr) {
         let val = this.mem[addr];
         return val;
     }
 
-    mem_write(addr,val) {
+    // write to memory at address addr, putting byte at that position
+    _mem_write(addr, val) {
         // make ROM read-only
         if (addr >= 0x4000)
             this.mem[addr] = val;
     }
 
-    io_read(port) {
+    // read from Input port
+    _io_read(port) {
         let val = 0xFF;
-        // last bit must be zero for keyboard (ULA)
-        if ((port & 1) == 0)
+        // ULA responds to any even address
+        if ((port & 1) == 0) {
+            // read from keyboard
             val = this._keyb.getKeyboardValueForPort(port);
+        }
         else
             val = 0;
 
         return val;
     }
 
-    io_write(port,val) {
-        // last bit must be zero for border (ULA)
-        if ((port & 1) == 0)
-            this._border = val;
+    // write to output port
+    _io_write(port, val) {
+        // ULA responds to any even address
+        if ((port & 1) == 0) {
+            // border is set with lower 3 bits of value
+            this._border = val & 0x07;
+        }
+            
     }
 
+    // reset the processor
     reset() {
         this.cpu.reset();
-    }
-
-    loadMemory(arr, org) {
-        org = org || 0;
-        for (let i = 0; i < arr.length; i++) {
-            this.mem[org+i] = arr[i];
-        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // Screen: image from memory at graphic memory area
     ////////////////////////////////////////////////////////////////////////////////
 
-    _createScreen()
+    _createScreen(canvasIdForScreen)
     {
+        // initial border color: white
+        this._border = 7;
+
+        // scale factor
         this.scale = 2;
-        this.canvas = document.getElementById('zxscr');
+
+        // create canvas and context
+        this.canvas = document.getElementById(canvasIdForScreen);
         this.ctx = this.canvas.getContext('2d');
-        this.zxid = new ZXScreenAsImageData(this.ctx, 32, 24);
+
+        // create image data for screeen, with given border
+        const xborder = 32;
+        const yborder = 24;
+        this.zxid = new ZXScreenAsImageData(this.ctx, xborder, yborder);
+
+        // resize canvas using screen and scale
         this.canvas.width  = this.zxid.getWidth()  * this.scale;
         this.canvas.height = this.zxid.getHeight() * this.scale;
-        this.ctx.imageSmoothingEnabled = false;
 
-        this._drawScreen();
+        // we want pixels!
+        this.ctx.imageSmoothingEnabled = false;
+;
     }
 
-    updateScreen()
+    _updateScreen()
     {
-        let off = 0x4000;
-        let scrlen = 6912;
-        let scr = new Uint8Array(scrlen);
+        // create array for screen memory, and fill it from graphic memory zone
+        const off = 0x4000;
+        const scrlen = 6912;
+        const scr = new Uint8Array(scrlen);
         for (let i = 0; i < scrlen; i++)
             scr[i] = this.mem[off + i];
+
+        // generate image data from array, border and flash state
         this.zxid.putSpectrumImage(scr, this._border, this._flashstate);
 
-        this._drawScreen();
-
-        this.cpu.interrupt(false, 0);
-    }
-
-    _drawScreen()
-    {
-        // identity transform
+        // set identity transform for removing previous scale factor
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-        // Draw the image data to the canvas
+        // Draw the image data to the canvas at 1:1 scale
         this.ctx.fillStyle = 'black';
         this.ctx.fillRect(0, 0, 100, 100);
         this.ctx.putImageData(this.zxid.imgdata, 0, 0);
 
-        //let img = this.ctx.getImageData(0, 0, 256, 192);
-        //console.log(img);
+        // Draw canvas onto itself using scale factor
         this.ctx.scale(this.scale, this.scale);
         this.ctx.drawImage(this.canvas, 0, 0);
     }
@@ -118,18 +162,21 @@ class MinZX
     // Snapshot loading
     ////////////////////////////////////////////////////////////////////////////////
 
-    _makeWord(lobyte, hibyte) {
-        return 256*hibyte + lobyte;
-    }
+    // documentation for SNA format: https://faqwiki.zxnet.co.uk/wiki/SNA_format
 
     loadSNA(data)
     {
+        // canonic SNAs are 49152 (48KB) + 27 bytes long. Enforce it.
         if (data.length != 49179) {
             console.warn('Unexpected data length: expected 49179, got ' + data.length);
         }
 
+        // helper for creating word from 2 bytes
+        function mkword(lobyte, hibyte) { return 256*hibyte + lobyte; }
+
+        // first 27 bytes hold register state, restore it
         const state = this.cpu.getState();
-        state.pc = 0x0072;  // RETN in ROM
+        state.pc = 0x0072;  // RETN in ROM, see SNA documentation
         state.i       = data[0x00];
         state.l_prime = data[0x01];
         state.h_prime = data[0x02];
@@ -145,20 +192,20 @@ class MinZX
         state.d       = data[0x0C];
         state.c       = data[0x0D];
         state.b       = data[0x0E];
-        state.iy      = this._makeWord(data[0x0F], data[0x10]);
-        state.ix      = this._makeWord(data[0x11], data[0x12]);
+        state.iy      = mkword(data[0x0F], data[0x10]);
+        state.ix      = mkword(data[0x11], data[0x12]);
         state.iff2    = data[0x13];
         state.r       = data[0x14];
         state.f       = data[0x15];
         state.a       = data[0x16];
-        state.sp      = this._makeWord(data[0x17], data[0x18]);
+        state.sp      = mkword(data[0x17], data[0x18]);
         state.imode   = data[0x19];
         this.cpu.setState(state);
 
+        // last byte holds border state
         this._border  = data[0x1A];
-        console.log(this._border);
-
-        // copy 48Kb memory
+ 
+        // copy 48KB of data from snapshot to RAM memory
         const datalen = 0xC000; // 48K
         const dataoff = 0x1B;   // 27
         const memoff  = 0x4000;  // 16K
@@ -171,12 +218,12 @@ class MinZX
     // Animation loop and timing
     ////////////////////////////////////////////////////////////////////////////////
 
-    start()
+    _start()
     {
         // cpu frequency, in kHz
         this._cpufreq = 3500;
         
-        // frame time, in msec
+        // frame time, in msec (msec is the inverse of kHz)
         this._frametime = 20;
 
         // previous time stamp, null initially
@@ -185,16 +232,19 @@ class MinZX
         // accumulated time, for emitting interrupt once per frame
         this._accumtime = this._frametime;
 
-        this._flashstate = false;
-        this._flashtime = 0;
-        this._flashperiod = 320;
+        // flash state variables
+        this._flashstate  = false;  // initially not inverted
+        this._flashtime   = 0;      // timestamp for inverting
+        this._flashperiod = 320;    // flash period in ms
 
         // load ROM and start animation when ROM loaded
         const self = this;
         loadRemoteBinaryFile('zx48.rom', function(data) {
             console.log('Loaded ZX Spectrum ROM: ' + data.length + ' bytes');
-            self._rom = data;
-            self.loadMemory(data);
+            for (let i = 0; i < 0x4000; i++) {
+                self.mem[i] = data[i];
+            }
+            // after loading ROM, request first animation frame draw
             self._requestAnimation();
         });
     }
@@ -209,12 +259,8 @@ class MinZX
 
     _onAnimationFrame(time)
     {
-        if (this._paused)
-        {
-            this._prevtime = null;
-            return;
-        }
-
+        // on first frame, _prevtime is null.
+        // on other frames, _prevtime is time of previous frame.
         if (this._prevtime != null)
         {
             // deltatime is current timestamp minus previous
@@ -227,37 +273,50 @@ class MinZX
             // draw frame for given deltatime
             this._onDrawFrame(time, deltatime);
         }
+        // annotate previous time
         this._prevtime = time;
 
+        // request another frame
         this._requestAnimation();
     }
 
     _onDrawFrame(time, deltatime)
     {
+        // accumulate deltatime (time of previous frame)
         this._accumtime += deltatime;
+
+        // if accumtime exceeds deltatime, we must draw
         while (this._accumtime >= this._frametime)
         {
+            // cycle counter
             let numCycles = 0;
+
+            // number of cycles for given frequency and frame time
             let maxCycles = this._cpufreq * this._frametime;
     
+            // execute instructions until max cycle count reached...
             while (numCycles < maxCycles) {
                 numCycles += this.cpu.run_instruction();
+                // ... or CPU halted (with HALT instruction)
                 if (this.cpu.is_halted()) {
-                    // console.log("halted");
                     break;
                 }    
             }
             
+            // evaluate flash inversion flag
             this._flashtime += this._frametime;
             if (this._flashtime >= this._flashperiod) {
                 this._flashtime -= this._flashperiod;
                 this._flashstate = !this._flashstate;
             }
 
-            this.updateScreen();
+            // redraw screen
+            this._updateScreen();
 
+            // emit maskable interrupt to wake up CPU from halted state
             this.cpu.interrupt(false, 0);
 
+            // substract frametime from accumtime before loop restart
             this._accumtime -= this._frametime;
         }
     }

@@ -12,13 +12,19 @@
     <title>MinZX - Minimalistic ZX Spectrum 48K emulator</title>
     <script>
 /**/
+"use strict";
 
 let minzx = null;
 
 window.addEventListener('load', function() {
-    minzx = new MinZX();
+    // create new instance of MinZX emulator,
+    // using element with id 'zxscr' as canvas,
+    minzx = new MinZX('zxscreen');
+
+    // start emulator
     minzx.start();
 
+    // load snapshot button
     const btnLoadSnaFile = document.getElementById('btnLoadSnaFile');
     btnLoadSnaFile.addEventListener('click', function() {
         loadLocalFile(function(data) {
@@ -26,12 +32,12 @@ window.addEventListener('load', function() {
         });
     });
 
+    // reset button
     const btnReset = document.getElementById('btnReset');
     btnReset.addEventListener('click', function() {
         minzx.reset();
     });
 });
-
 /**/
     </script>
     <style>
@@ -45,7 +51,7 @@ body {
 <body>
     <p>MinZX - Minimalistic ZX Spectrum 48K emulator</p>
     <p>Developed in 2020 by <a href="https://github.com/dcrespo3d">DCrespo</a>, see <a href="https://github.com/dcrespo3d/MinZX">source code</a></p>
-    <canvas id=zxscr></canvas>
+    <canvas id=zxscreen></canvas>
     <br/><br/>
     <button id=btnLoadSnaFile>Load Snapshot...</button>
     <button id=btnReset>Reset</button>
