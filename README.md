@@ -3,6 +3,8 @@ Minimal ZX Spectrum 48K emulator in JavaScript.
 
 This is a minimalistic and incomplete emulator written for learning the architecture of the ZX Spectrum and Z80 assembly programming.
 
+Not ALL games work... but many do. Feel free to load your .SNA files.
+
 It has a small code base which makes it easy to understand.
 
 [Try it here](https://dcrespo3d.github.io/MinZX/index.html). Keyboard required, not for mobile.
@@ -11,13 +13,13 @@ It has a small code base which makes it easy to understand.
 
 ## Features
 - ZX Spectrum 48K emulation with original ROM.
-- Screen emulation with BRIGHT and FLASH attributes.
+- Screen emulation with border, BRIGHT and FLASH attributes.
 - Keyboard emulation, from DOM keydown/keyup events.
 - SNA snapshot loading from local filesystem (can play Manic Miner and Jet Set Willy - not included).
 
 ### Features not implemented
 - Sound.
-- Border.
+- Intra-frame border changes. Border is refreshed once per frame.
 - Snapshot saving.
 - Loading from other tape formats.
 - So many others...

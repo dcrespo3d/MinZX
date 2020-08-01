@@ -20,6 +20,8 @@ class MinZX
 
         this._keyb = new ZXKeyboard(window);
 
+        this._border = 5;
+
      }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -37,7 +39,7 @@ class MinZX
 
     io_read(port) {
         let val = 0xFF;
-        // last bit must be zero for keyboard
+        // last bit must be zero for keyboard (ULA)
         if ((port & 1) == 0)
             val = this._keyb.getKeyboardValueForPort(port);
         else
@@ -47,7 +49,9 @@ class MinZX
     }
 
     io_write(port,val) {
-        // TBD
+        // last bit must be zero for border (ULA)
+        if ((port & 1) == 0)
+            this._border = val;
     }
 
     reset() {
@@ -69,11 +73,11 @@ class MinZX
     {
         this.scale = 2;
         this.canvas = document.getElementById('zxscr');
-        this.canvas.width = 256 * this.scale;
-        this.canvas.height = 192 * this.scale;
         this.ctx = this.canvas.getContext('2d');
+        this.zxid = new ZXScreenAsImageData(this.ctx, 32, 24);
+        this.canvas.width  = this.zxid.getWidth()  * this.scale;
+        this.canvas.height = this.zxid.getHeight() * this.scale;
         this.ctx.imageSmoothingEnabled = false;
-        this.zxid = new ZXScreenAsImageData(this.ctx);
 
         this._drawScreen();
     }
@@ -85,7 +89,7 @@ class MinZX
         let scr = new Uint8Array(scrlen);
         for (let i = 0; i < scrlen; i++)
             scr[i] = this.mem[off + i];
-        this.zxid.putSpectrumImage(scr, 0, this._flashstate);
+        this.zxid.putSpectrumImage(scr, this._border, this._flashstate);
 
         this._drawScreen();
 

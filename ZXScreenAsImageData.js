@@ -19,10 +19,12 @@ const zxcolors = [
 
 class ZXScreenAsImageData
 {
-    constructor(ctx)
+    constructor(ctx, xborder, yborder)
     {
-        this.width = 256;
-        this.height = 192;
+        this.xborder = xborder ? xborder : 0;
+        this.yborder = yborder ? yborder : 0;
+        this.width = 256 + 2 * this.xborder;
+        this.height = 192 + 2 * this.yborder;
 
         this.imgdata = ctx.createImageData(this.width, this.height);
         let bytecnt = this.width * this.height * 4;
@@ -30,6 +32,8 @@ class ZXScreenAsImageData
             this.imgdata.data[i] = 255;
     }
 
+    getWidth () { return this.width;  }
+    getHeight() { return this.height; }
     getAttrColorIndexForBit0(attr)
     {
         let bri = (attr & 0x40) != 0 ? 0x08 : 0x00;
@@ -52,6 +56,21 @@ class ZXScreenAsImageData
         let idst = 0;
 
         const data = this.imgdata.data;
+
+        // fill all pixels with border color
+        const bcol = this.getAttrColorIndexForBit1(border & 0x07);
+        const pixelcnt = this.width * this.height * 4;
+        for (let i = 0; i < pixelcnt; i++) {
+            data[idst++] = bcol[0];
+            data[idst++] = bcol[1];
+            data[idst++] = bcol[2];
+            data[idst++] = bcol[3];
+        }
+
+        idst = 0;
+        idst += 4 * this.yborder * this.width;
+        idst += 4 * this.xborder
+        const idst_extra = 4 * 2 * this.xborder;
 
         for (let row = 0; row < 24; row++)
         {
@@ -92,6 +111,7 @@ class ZXScreenAsImageData
                         }
                     }
                 }
+                idst += idst_extra;
             }
         }
     }
