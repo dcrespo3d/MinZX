@@ -42,8 +42,14 @@ class MinZX
         // create screen helper object
         this._screen = new ZXScreen(canvasIdForScreen);
 
-       // create keyboard helper object, receiving events from window
+        // create keyboard helper object, receiving events from window
         this._keyb = new ZXKeyboard(window);
+
+        // create sound helper object
+        this._sound = new ZXSoundOutput();
+
+        // previous sound bit for reacting only to changes in bit
+        this._prev_sound_bit = 0;
 
         // initially not started
         this._started = false;
@@ -64,6 +70,7 @@ class MinZX
     // read from memory at address addr, return byte at that position
     _mem_read(addr) {
         let val = this.mem[addr];
+        this._emulate_contended_memory(addr);
         return val;
     }
 
@@ -72,6 +79,7 @@ class MinZX
         // make ROM read-only
         if (addr >= 0x4000)
             this.mem[addr] = val;
+        this._emulate_contended_memory(addr);
     }
 
     // read from Input port
@@ -94,13 +102,29 @@ class MinZX
         if ((port & 1) == 0) {
             // border is set with lower 3 bits of value
             this._screen.border = val & 0x07;
+            // sound is bit 4
+            const sound_bit = val & 0x10 ? 1 : 0;
+            if (sound_bit != this._prev_sound_bit) {
+                // calculate transition time
+                let ttime = this._framecount * this._frametime;
+                ttime += this._cyclecount / this._cpufreq;
+                // notify transition time
+                this._sound.notifyTransitionTime(ttime);
+                // annotate previous bit
+                this._prev_sound_bit = sound_bit;
+            }
         }
-            
     }
 
     // reset the processor
     reset() {
         this.cpu.reset();
+    }
+
+    _emulate_contended_memory(addr) {
+        if (addr >= 0x4000 && addr < 0x8000) {
+            this._cyclecount += 8000;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -168,6 +192,9 @@ class MinZX
         // cpu frequency, in kHz
         this._cpufreq = 3500;
         
+        // frame counter
+        this._framecount = 0;
+
         // frame time, in msec (msec is the inverse of kHz)
         this._frametime = 20;
 
@@ -181,6 +208,10 @@ class MinZX
         this._flashstate  = false;  // initially not inverted
         this._flashtime   = 0;      // timestamp for inverting
         this._flashperiod = 320;    // flash period in ms
+
+        // cycle counter and period (cycles per frame) are needed for accurate sound
+        this._cyclecount = 0;
+        this._cycleperiod;
 
         // load ROM and start animation when ROM loaded
         const self = this;
@@ -230,23 +261,23 @@ class MinZX
         // accumulate deltatime (time of previous frame)
         this._accumtime += deltatime;
 
+        // number of cycles for given frequency and frame time
+        this._cycleperiod = this._cpufreq * this._frametime;
+
         // if accumtime exceeds deltatime, we must draw
         while (this._accumtime >= this._frametime)
         {
-            // cycle counter
-            let numCycles = 0;
-
-            // number of cycles for given frequency and frame time
-            let maxCycles = this._cpufreq * this._frametime;
-    
             // execute instructions until max cycle count reached...
-            while (numCycles < maxCycles) {
-                numCycles += this.cpu.run_instruction();
+            while (this._cyclecount < this._cycleperiod) {
+                this._cyclecount += this.cpu.run_instruction();
                 // ... or CPU halted (with HALT instruction)
                 if (this.cpu.is_halted()) {
                     break;
                 }    
             }
+
+            // cycle count must be monotonic
+            this._cyclecount -= this._cycleperiod;
             
             // evaluate flash inversion flag
             this._flashtime += this._frametime;
@@ -260,6 +291,9 @@ class MinZX
 
             // emit maskable interrupt to wake up CPU from halted state
             this.cpu.interrupt(false, 0);
+
+            // increase frame counter
+            this._framecount++;
 
             // substract frametime from accumtime before loop restart
             this._accumtime -= this._frametime;
