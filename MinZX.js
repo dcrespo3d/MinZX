@@ -122,9 +122,9 @@ class MinZX
     }
 
     _emulate_contended_memory(addr) {
-        // if (addr >= 0x4000 && addr < 0x8000) {
-        //     this._cyclecount += 8000;
-        // }
+        if (addr >= 0x4000 && addr < 0x8000) {
+            this._cyclecount += 3;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -267,9 +267,15 @@ class MinZX
         // if accumtime exceeds deltatime, we must draw
         while (this._accumtime >= this._frametime)
         {
+            let numins = 0;
             // execute instructions until max cycle count reached...
             while (this._cyclecount < this._cycleperiod) {
-                this._cyclecount += this.cpu.run_instruction();
+                // pitfall: this._cyclecount += this.cpu.run_instruction();
+                // will fail to consider cycles incremented as a side effect
+                // of running run_instruction (ex: contended memory)
+                let instructionCycles = this.cpu.run_instruction();
+                this._cyclecount += instructionCycles;
+                numins++;
                 // ... or CPU halted (with HALT instruction)
                 if (this.cpu.is_halted()) {
                     break;
