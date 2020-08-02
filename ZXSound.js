@@ -53,8 +53,22 @@ class ZXSoundOutput
         // is not widespread enough yet.
         this.sproc = this.ctx.createScriptProcessor(this._bufsize, 0, 1);
 
-        // connect processor to audio destination
-        this.sproc.connect(this.ctx.destination);
+        // high pass filter for removing DC offset
+        this.hpfilter = this.ctx.createBiquadFilter();
+        this.hpfilter.type = "highpass";
+        this.hpfilter.frequency.setValueAtTime(20, 0);
+        this.hpfilter.Q.value = 1;
+
+        // low pass filter for simulating speaker
+        this.lpfilter = this.ctx.createBiquadFilter();
+        this.lpfilter.type = "lowpass";
+        this.lpfilter.frequency.setValueAtTime(4000, 0);
+        // this.lpfilter.Q.value = 1;
+ 
+        // connect nodes
+        this.sproc.connect(this.hpfilter);
+        this.hpfilter.connect(this.lpfilter);
+        this.lpfilter.connect(this.ctx.destination);
 
         // setup audio process callback
         const self = this;
