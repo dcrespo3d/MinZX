@@ -15,10 +15,11 @@ It has a small code base which makes it easy to understand.
 - ZX Spectrum 48K emulation with original ROM.
 - Screen emulation with border, BRIGHT and FLASH attributes.
 - Keyboard emulation, from DOM keydown/keyup events.
-- SNA snapshot loading from local filesystem (can play Manic Miner and Jet Set Willy - not included).
+- Sound emulation with 4x supersampling for clear beeper tunes.
+- SNA snapshot loading from local filesystem.
+- Good (but not perfect) timing, counting processor cycles, vertical interrupts, and a naive contended memory algorithm.
 
 ### Features not implemented
-- Sound.
 - Intra-frame border changes. Border is refreshed once per frame.
 - Snapshot saving.
 - Loading from other tape formats.
