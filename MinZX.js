@@ -122,9 +122,9 @@ class MinZX
     }
 
     _emulate_contended_memory(addr) {
-        if (addr >= 0x4000 && addr < 0x8000) {
-            this._cyclecount += 8000;
-        }
+        // if (addr >= 0x4000 && addr < 0x8000) {
+        //     this._cyclecount += 8000;
+        // }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
