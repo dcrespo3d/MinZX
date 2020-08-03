@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// @file MinZX.js
+/// @file ZXKeyboard.js
 ///
 /// @brief Keyboard abstraction for the MinZX 48K Spectrum emulator
 ///
@@ -13,8 +13,9 @@
 
 "use strict";
 
-// reference:
+// references:
 // https://worldofspectrum.org/faq/reference/48kreference.htm
+// http://www.breakintoprogram.co.uk/computers/zx-spectrum/keyboard
 
 // This class models the ZX Spectrum keyboard.
 // The Spectrum has 40 keys, which are read through 8 ports.

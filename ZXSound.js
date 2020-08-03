@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// @file MinZX.js
+/// @file ZXSound.js
 ///
 /// @brief Sound/beeper abstraction for the MinZX 48K Spectrum emulator
 ///

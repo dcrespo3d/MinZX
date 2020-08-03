@@ -121,6 +121,7 @@ class MinZX
         this.cpu.reset();
     }
 
+    // emulate contended memory
     _emulate_contended_memory(addr) {
         if (addr >= 0x4000 && addr < 0x8000) {
             this._cyclecount += 3;
