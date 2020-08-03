@@ -1,15 +1,21 @@
 # MinZX
-Minimal ZX Spectrum 48K emulator in JavaScript.
+Minimalistic ZX Spectrum 48K emulator written in JavaScript.
 
-This is a minimalistic and incomplete emulator written for learning the architecture of the ZX Spectrum and Z80 assembly programming.
+It has screen, keyboard and sound, and can load snapshots in SNA format.
 
-Not ALL games work... but many do. Feel free to load your .SNA files.
+This emulator started as a personal project with the following goals:
+- Learning Z80 assembly programming.
+- Learning about the architecture of the ZX Spectrum.
 
-It has a small code base which makes it easy to understand.
+It gradually evolved towards a fairly complete emulator, without adding too much code complication.
+
+The project totals ~1000 lines of code`*` (including lots of comments and empty lines), so it's great for learning how an emulator works. Its code is well structured, with separate classes for screen, keyboard, sound and core machine.
+
+(`*`excluding `Z80.js` which emulates the Z80 CPU and has ~3400 lines of code).
 
 [Try it here](https://dcrespo3d.github.io/MinZX/index.html). Keyboard required, not for mobile.
 
-![MinZX](./docs/MinZX.png)
+[![MinZX](https://dcrespo3d.github.io/MinZX/docs/MinZX.png)](https://dcrespo3d.github.io/MinZX/index.html)
 
 ## Features
 - ZX Spectrum 48K emulation with original ROM.
@@ -17,12 +23,13 @@ It has a small code base which makes it easy to understand.
 - Keyboard emulation, from DOM keydown/keyup events.
 - Sound emulation with 4x supersampling for clear beeper tunes.
 - SNA snapshot loading from local filesystem.
-- Good (but not perfect) timing, counting processor cycles, vertical interrupts, and a naive contended memory algorithm.
+- Good compatibility with LOTS of supported games (48K SNA only).
+- Good timing, counting processor cycles, using vertical interrupts, and a simplistic contended memory algorithm.
 
 ### Features not implemented
+- Snapshot saving (in wish list).
 - Intra-frame border changes. Border is refreshed once per frame.
-- Snapshot saving.
-- Loading from other tape formats.
+- Tape loading, only loading mechanism is through SNA snapshot.
 - So many others...
 
 ## Thanks to
