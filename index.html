@@ -11,8 +11,36 @@
     <script src="ZXKeyboard.js"></script>
     <script src="ZXSound.js"></script>
     <title>MinZX - Minimalistic ZX Spectrum 48K emulator</title>
+    <style>
+body {
+    background: #DDD;
+    font-family: Arial, Helvetica, sans-serif;
+}
+    </style>
+</head>
+<body>
+    <p>MinZX - Minimalistic ZX Spectrum 48K emulator</p>
+    <p>Developed in 2020 by <a href="https://github.com/dcrespo3d">DCrespo</a>, see <a href="https://github.com/dcrespo3d/MinZX">source code</a></p>
+    <canvas id=zxscreen></canvas>
+    <br/><br/>
+    <button id=btnLoadSnaFile>Load Snapshot...</button>
+    <button id=btnReset>Reset</button>
+
     <script>
 /**/
+///////////////////////////////////////////////////////////////////////////////
+/// @file index.html
+///
+/// @brief main html file for the MinZX 48K Spectrum emulator
+///
+/// @author David Crespo Tascon
+//////
+/// @copyright (c) David Crespo Tascon
+///  This code is released under the MIT license,
+///  a copy of which is available in the associated LICENSE file,
+///  or at http://opensource.org/licenses/MIT
+///////////////////////////////////////////////////////////////////////////////
+
 "use strict";
 
 let minzx = null;
@@ -52,187 +80,7 @@ window.addEventListener('load', function() {
         minzx.reset();
     });
 });
-
-
-
-
-
-
-// var AudioContext = this.AudioContext || this.webkitAudioContext;
-// if (!AudioContext) throw "No audio";
-// var audioCtx = new AudioContext,
-//     scriptProcessor = audioCtx.createScriptProcessor(2048, 0, 1);
-// scriptProcessor.connect(audioCtx.destination);
-// var optioneer = {
-//     hz: audioCtx.sampleRate,
-//     v: new Float32Array(8192),
-//     s: 0,
-//     p: 0,
-//     k: 8191
-// };
-// scriptProcessor.onaudioprocess = function(audioProcessingEvent) {
-//     return;
-//     var d = 0,
-//         b = 0,
-//         n = l.hz,
-//         p = Math.pow(2, -35e5 / (700 * n)),
-//         k = Math.pow(2, -35e5 / (23256 * n));
-//     return function(n) {
-//         emu.h = void 0;
-//         var t, i = n.outputBuffer.getChannelData(0),
-//             u = l.v,
-//             o = l.s,
-//             f = l.k,
-//             c = i.length,
-//             r = l.p - o & f,
-//             e = c < r ? c : r,
-//             a = d,
-//             v = b,
-//             s = 0;
-//         if (0 < e)
-//             for (; t = a + u[o], o = o + 1 & f, a = p * t, i[s++] = v = k * (v + t - a), --e;);
-//         if (l.s = o, 0 < (e = c - r) && (v || a))
-//             for (; t = a, a *= p, i[s++] = v = k * (v + t - a), --e;);
-//         b = v, d = a
-//     }
-// }(optioneer), console.log(u), n(optioneer), emu.h = function() {
-//     emu.h = void 0, i.resume()
-// }
-
-
-
-
-
-
-
-
-
-// // use one context per document. Here we are creating one context for one document. You can create for other documents also
-// var context = new (window.AudioContext || window.webkitAudioContext)();
-
-// // oscillator
-// var os = context.createOscillator();  
-// os.type = 'sine'; // sine is the default. So you can also use square, saw tooth, triangle
-// os.frequency.value = 500; // setting the frequency Hz
-// os.connect(context.destination); // connecting  to the destination
-
-// // starting the oscillator
-// os.start();  
-// os.stop(context.currentTime + 1); // stop 5 seconds after the current time
-
-// var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-// // Create an empty three-second stereo buffer at the sample rate of the AudioContext
-// var myArrayBuffer = audioCtx.createBuffer(2, audioCtx.sampleRate * 3, audioCtx.sampleRate);
-
-// // Fill the buffer with white noise;
-// // just random values between -1.0 and 1.0
-// for (var channel = 0; channel < myArrayBuffer.numberOfChannels; channel++) {
-//   // This gives us the actual array that contains the data
-//   var nowBuffering = myArrayBuffer.getChannelData(channel);
-//   for (var i = 0; i < myArrayBuffer.length; i++) {
-//     // Math.random() is in [0; 1.0]
-//     // audio needs to be in [-1.0; 1.0]
-//     nowBuffering[i] = Math.random() * 2 - 1;
-//   }
-// }
-
-// // Get an AudioBufferSourceNode.
-// // This is the AudioNode to use when we want to play an AudioBuffer
-// var source = audioCtx.createBufferSource();
-
-// // set the buffer in the AudioBufferSourceNode
-// source.buffer = myArrayBuffer;
-
-// // connect the AudioBufferSourceNode to the
-// // destination so we can hear the sound
-// source.connect(audioCtx.destination);
-
-// // start the source playing
-// source.start();
-
-// // Create AudioContext and buffer source
-// var audioCtx = new AudioContext();
-// var source = audioCtx.createBufferSource();
-
-// // Create a ScriptProcessorNode with a bufferSize of 4096 and a single input and output channel
-// var scriptNode = audioCtx.createScriptProcessor(4096, 1, 1);
-// console.log(scriptNode.bufferSize);
-
-// // load in an audio track via XHR and decodeAudioData
-
-// function getData() {
-//   request = new XMLHttpRequest();
-//   request.open('GET', 'viper.ogg', true);
-//   request.responseType = 'arraybuffer';
-//   request.onload = function() {
-//     var audioData = request.response;
-
-//     audioCtx.decodeAudioData(audioData, function(buffer) {
-//     myBuffer = buffer;   
-//     source.buffer = myBuffer;
-//   },
-//     function(e){"Error with decoding audio data" + e.err});
-//   }
-//   request.send();
-// }
-
-// // Give the node a function to process audio events
-// scriptNode.onaudioprocess = function(audioProcessingEvent) {
-//   // The input buffer is the song we loaded earlier
-//   var inputBuffer = audioProcessingEvent.inputBuffer;
-
-//   // The output buffer contains the samples that will be modified and played
-//   var outputBuffer = audioProcessingEvent.outputBuffer;
-
-//   // Loop through the output channels (in this case there is only one)
-//   for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
-//     var inputData = inputBuffer.getChannelData(channel);
-//     var outputData = outputBuffer.getChannelData(channel);
-
-//     // Loop through the 4096 samples
-//     for (var sample = 0; sample < inputBuffer.length; sample++) {
-//       // make output equal to the same as the input
-//       outputData[sample] = inputData[sample];
-
-//       // add noise to each output sample
-//       outputData[sample] += ((Math.random() * 2) - 1) * 0.2;         
-//     }
-//   }
-// }
-
-// getData();
-
-// // wire up play button
-// playButton.onclick = function() {
-//   source.connect(scriptNode);
-//   scriptNode.connect(audioCtx.destination);
-//   source.start();
-// }
-      
-// // When the buffer source stops playing, disconnect everything
-// source.onended = function() {
-//   source.disconnect(scriptNode);
-//   scriptNode.disconnect(audioCtx.destination);
-// }
-
 /**/
     </script>
-    <style>
-body {
-    background: #DDD;
-    font-family: Arial, Helvetica, sans-serif;
-}
-
-    </style>
-</head>
-<body>
-    <p>MinZX - Minimalistic ZX Spectrum 48K emulator</p>
-    <p>Developed in 2020 by <a href="https://github.com/dcrespo3d">DCrespo</a>, see <a href="https://github.com/dcrespo3d/MinZX">source code</a></p>
-    <canvas id=zxscreen></canvas>
-    <br/><br/>
-    <button id=btnLoadSnaFile>Load Snapshot...</button>
-    <button id=btnReset>Reset</button>
-    </div>
 </body>
 </html>
