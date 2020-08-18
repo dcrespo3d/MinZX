@@ -157,13 +157,22 @@ class MinZX
 
     loadSNA(data)
     {
-        // canonic SNAs are 49152 (48KB) + 27 bytes long. Enforce it.
+        // canonic SNAs are 49152 (48KB) + 27 bytes long. Check it.
         if (data.length != 49179) {
             console.warn('Unexpected data length: expected 49179, got ' + data.length);
         }
 
         // helper for creating word from 2 bytes
         function mkword(lobyte, hibyte) { return 256*hibyte + lobyte; }
+
+        // helper for loading flags from byte to object. reference: https://www.istvannovak.net/2018/02/01/zx-spectrum-ide-part-5-implementing-z80-instructions-1/
+        function objForByte(b) {
+            let o = {};
+            const flagnames = "CNPXHYZS"; // flag names, bit 0 is C, bit 1 is N... bit 7 is S.
+            for (let i = 0; i < 8; i++)
+                o[flagnames[i]] = (b & (1 << i)) ? 1 : 0;
+            return o;
+        }
 
         // first 27 bytes hold register state, restore it
         const state = this.cpu.getState();
@@ -175,7 +184,7 @@ class MinZX
         state.d_prime = data[0x04];
         state.c_prime = data[0x05];
         state.b_prime = data[0x06];
-        state.f_prime = data[0x07];
+        state.flags_prime = objForByte(data[0x07]);
         state.a_prime = data[0x08];
         state.l       = data[0x09];
         state.h       = data[0x0A];
@@ -187,7 +196,7 @@ class MinZX
         state.ix      = mkword(data[0x11], data[0x12]);
         state.iff2    = data[0x13];
         state.r       = data[0x14];
-        state.f       = data[0x15];
+        state.flags = objForByte(data[0x15]);
         state.a       = data[0x16];
         state.sp      = mkword(data[0x17], data[0x18]);
         state.imode   = data[0x19];
