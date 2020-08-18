@@ -124,8 +124,29 @@ class MinZX
     // emulate contended memory
     _emulate_contended_memory(addr) {
         if (addr >= 0x4000 && addr < 0x8000) {
-            this._cyclecount += 3;
+            const heuristic_factor = 3;
+            this._cyclecount += heuristic_factor * this._ctmem_extra_cycles(this._cyclecount);
         }
+    }
+
+    // reference: https://worldofspectrum.org/faq/reference/48kreference.htm#ZXSpectrum
+    // from paragraph which starts with "The 50 Hz interrupt is synchronized with..."
+    // if you only read from https://worldofspectrum.org/faq/reference/48kreference.htm#Contention
+    // without reading the previous paragraphs about line timings, it may be confusing.
+    _ctmem_extra_cycles(T)
+    {
+        //return 3;
+        const wait_pattern = [6, 5, 4, 3, 2, 1, 0, 0];
+        T += 1;
+        const line = (T / 224) | 0; // fast float->int
+        if (line >= 64 && line < 256) {
+            const halfpix = T % 224;
+            if (halfpix < 128) {
+                const wpi = halfpix % 8;
+                return wait_pattern[wpi];
+            }
+        }
+        return 0;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
