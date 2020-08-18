@@ -28,10 +28,9 @@ The project totals ~1200 lines of code`*` (including lots of comments and empty 
 - Good timing, counting processor cycles, using vertical interrupts, and a simplistic contended memory algorithm.
 
 ### Features not implemented
-- Snapshot saving (in wish list).
 - Intra-frame border changes. Border is refreshed once per frame.
 - Tape loading, only loading mechanism is through SNA snapshot.
-- So many others...
+- Some precise emulation details, such as contended ports, snow effect, and others.
 
 ## Thanks to
 
