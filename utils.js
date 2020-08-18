@@ -54,7 +54,7 @@ function loadLocalFile(callback) {
             }
             let arrayBuffer = this.result;
             let byteArray = new Uint8Array(arrayBuffer);
-            callback(byteArray);
+            callback(file.name, byteArray);
         };
 
         reader.onabort = function() { alert('File read aborted'); }

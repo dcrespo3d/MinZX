@@ -150,7 +150,7 @@ class MinZX
     }
 
     ////////////////////////////////////////////////////////////////////////////////
-    // Snapshot loading
+    // Snapshot loading / saving
     ////////////////////////////////////////////////////////////////////////////////
 
     // documentation for SNA format: https://faqwiki.zxnet.co.uk/wiki/SNA_format
@@ -212,6 +212,77 @@ class MinZX
         for (let i = 0; i < datalen; i++) {
             this.mem[memoff+i] = data[dataoff+i];
         }
+    }
+
+    saveSNA()
+    {
+        // CPU state
+        const state = this.cpu.getState();
+        // stack pointer must be in RAM
+        if (state.sp < 0x4000 + 2)
+            return null;
+            
+        // create array for canonic SNAs are 49152 (48KB) + 27 bytes long.
+        const data = new Array(49179);
+
+       // helper for getting low and high bytes from word
+        function lobyte(word) { return  word       & 0xFF; }
+        function hibyte(word) { return (word >> 8) & 0xFF; }
+
+        // helper for loading flags from object to byte.
+        function byteForObj(o) {
+            let b = 0;
+            const flagnames = "CNPXHYZS"; // flag names, bit 0 is C, bit 1 is N... bit 7 is S.
+            for (let i = 0; i < 8; i++)
+                b |= o[flagnames[i]] ? (1 << i) : 0;
+            return b;
+        }
+
+        // first 27 bytes hold register state, save it
+        data[0x00] = state.i;
+        data[0x01] = state.l_prime;
+        data[0x02] = state.h_prime;
+        data[0x03] = state.e_prime;
+        data[0x04] = state.d_prime;
+        data[0x05] = state.c_prime;
+        data[0x06] = state.b_prime;
+        data[0x07] = byteForObj(state.flags_prime);
+        data[0x08] = state.a_prime;
+        data[0x09] = state.l;
+        data[0x0A] = state.h;
+        data[0x0B] = state.e;
+        data[0x0C] = state.d;
+        data[0x0D] = state.c;
+        data[0x0E] = state.b;
+        data[0x0F] = lobyte(state.iy);
+        data[0x10] = hibyte(state.iy);
+        data[0x11] = lobyte(state.ix);
+        data[0x12] = hibyte(state.ix);
+        data[0x13] = state.iff2;
+        data[0x14] = state.r;
+        data[0x15] = byteForObj(state.flags);
+        data[0x16] = state.a;
+        // store stack pointer with value decreased, we will be pushing PC onto stack
+        data[0x17] = lobyte(state.sp - 2);
+        data[0x18] = hibyte(state.sp - 2);
+        data[0x19] = state.imode;
+
+        // last byte holds border state
+        data[0x1A] = this._screen.border;
+ 
+        // copy 48KB of data from RAM memory to snapshot
+        const datalen = 0xC000; // 48K
+        const dataoff = 0x1B;   // 27
+        const memoff  = 0x4000;  // 16K
+        for (let i = 0; i < datalen; i++) {
+            data[dataoff+i] = this.mem[memoff+i];
+        }
+
+        // push PC onto stack (directly to snapshot RAM)
+        data[dataoff - memoff + state.sp - 2] = lobyte(state.pc);
+        data[dataoff - memoff + state.sp - 1] = hibyte(state.pc);
+
+        return data;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -337,4 +408,3 @@ class MinZX
         }
     }
 }
-

@@ -17,6 +17,13 @@ body {
     background: #DDD;
     font-family: Arial, Helvetica, sans-serif;
 }
+#statusmsg {
+    width: 640px;
+    text-align: center;
+    color: #EEE;
+    background-color: #777;
+    display: none;
+}
     </style>
 </head>
 <body>
@@ -24,8 +31,12 @@ body {
     <p>Developed in 2020 by <a href="https://github.com/dcrespo3d">DCrespo</a>, see <a href="https://github.com/dcrespo3d/MinZX">source code</a></p>
     <canvas id=zxscreen></canvas>
     <br/><br/>
-    <button id=btnLoadSnaFile>Load Snapshot...</button>
     <button id=btnReset>Reset</button>
+    <button id=btnLoadSnaFile>Load Snapshot...</button>
+    <button id=btnSaveQuickSna>Quick Save (F2)</button>
+    <button id=btnLoadQuickSna>Quick Load (F3)</button>
+    <br/>
+    <p id="statusmsg"></p>
 
     <script>
 /**/
@@ -56,7 +67,7 @@ window.addEventListener('load', function() {
 
     // chrome starts AudioContext in suspended state.
     let resumeOnce = true;
-    window.addEventListener('keydown', function() {
+    window.addEventListener('keydown', function(e) {
         if (resumeOnce) {
             resumeOnce = false;
             theAudioContext.resume();
@@ -70,8 +81,9 @@ window.addEventListener('load', function() {
             resumeOnce = false;
             theAudioContext.resume();
         }
-        loadLocalFile(function(data) {
+        loadLocalFile(function(filename, data) {
             minzx.loadSNA(data);
+            displayStatus("Loaded Snapshot: " + filename);
         });
     });
 
@@ -79,8 +91,80 @@ window.addEventListener('load', function() {
     const btnReset = document.getElementById('btnReset');
     btnReset.addEventListener('click', function() {
         minzx.reset();
+        displayStatus('Reset');
     });
+
+    // key for quick snapshot save on local storage
+    const quickSaveKey = 'MinZX-QuickSave';
+
+    let quickSaveEnabled = false;
+    let quickLoadEnabled = false;
+
+    function doQuickSave() {
+        if (!quickSaveEnabled) return;
+        enableQuickLoad(true);
+        const snadata = minzx.saveSNA();
+        if (snadata == null) {
+            displayStatus("Cannot Save Quick Snapshot");
+            return;
+        }
+        const snapshot = { data: snadata };
+        window.localStorage[quickSaveKey] = JSON.stringify(snapshot);
+        displayStatus("Saved Quick Snapshot");
+    }
+
+    function doQuickLoad() {
+        if (!quickLoadEnabled) return;
+        const snapshot = JSON.parse(window.localStorage[quickSaveKey]);
+        minzx.loadSNA(snapshot.data);
+        displayStatus("Loaded Quick Snapshot");
+    }
+
+    // quick save button
+    const btnSaveQuickSna = document.getElementById('btnSaveQuickSna');
+    btnSaveQuickSna.addEventListener('click', function() {
+        doQuickSave();
+    });
+
+    // quick load button
+    const btnLoadQuickSna = document.getElementById('btnLoadQuickSna');
+    btnLoadQuickSna.addEventListener('click', function() {
+        doQuickLoad();
+    });
+
+    // quick save/load keys
+    window.addEventListener('keyup', function(e) {
+        if (e.key == "F2") doQuickSave();
+        if (e.key == "F3") doQuickLoad();
+    });
+
+    function enableQuickSave(enabled) { quickSaveEnabled = enabled; btnSaveQuickSna.style.display = enabled ? 'inline-block' : 'none'; }
+    function enableQuickLoad(enabled) { quickLoadEnabled = enabled; btnLoadQuickSna.style.display = enabled ? 'inline-block' : 'none'; }
+
+    if (window.localStorage) {
+        enableQuickSave(true);
+        if (quickSaveKey in window.localStorage) enableQuickLoad(true);
+        else                                     enableQuickLoad(false);
+    }
+    else {
+        enableQuickSave(false);
+        enableQuickLoad(false);
+    }
+
+    let idDisplayTimeout;
+
+    // status line
+    function displayStatus(text) {
+        const statusmsg = document.getElementById('statusmsg');
+        statusmsg.style.display = 'block';
+        statusmsg.innerText = text;
+        clearTimeout(idDisplayTimeout);
+        idDisplayTimeout = setTimeout(function() {
+            statusmsg.style.display = 'none';    
+        }, 2000);
+    }
 });
+
 /**/
     </script>
 </body>

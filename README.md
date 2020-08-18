@@ -9,7 +9,7 @@ This emulator started as a personal project with the following goals:
 
 It gradually evolved towards a fairly complete emulator, without adding too much code complication.
 
-The project totals ~1000 lines of code`*` (including lots of comments and empty lines), so it's great for learning how an emulator works. Its code is well structured, with separate classes for screen, keyboard, sound and core machine.
+The project totals ~1200 lines of code`*` (including lots of comments and empty lines), so it's great for learning how an emulator works. Its code is well structured, with separate classes for screen, keyboard, sound and core machine.
 
 (`*`excluding `Z80.js` which emulates the Z80 CPU and has ~3400 lines of code).
 
@@ -24,6 +24,7 @@ The project totals ~1000 lines of code`*` (including lots of comments and empty 
 - Sound emulation with 4x supersampling for clear beeper tunes.
 - SNA snapshot loading from local filesystem.
 - Good compatibility with LOTS of supported games (48K SNA only).
+- Quick snapshot saving / loading, for evil games like Jet Set Willy ;-)
 - Good timing, counting processor cycles, using vertical interrupts, and a simplistic contended memory algorithm.
 
 ### Features not implemented
