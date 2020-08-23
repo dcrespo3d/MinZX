@@ -23,9 +23,6 @@ class ZXScreen
         // initial border color: white
         this.border = 7;
 
-        // scale factor
-        this.scale = 2;
-
         // create canvas and context
         this.canvas = document.getElementById(canvasIdForScreen);
         this.ctx = this.canvas.getContext('2d');
@@ -34,6 +31,17 @@ class ZXScreen
         const xborder = 32;
         const yborder = 24;
         this.zxid = new ZXScreenAsImageData(this.ctx, xborder, yborder);
+
+        // initialscale
+        this.setScale(2);
+    }
+
+    getScale() { return this.scale; }
+
+    setScale(scale)
+    {
+        // scale factor
+        this.scale = scale;
 
         // resize canvas using screen and scale
         this.canvas.width  = this.zxid.getWidth()  * this.scale;

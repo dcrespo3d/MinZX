@@ -59,14 +59,13 @@ class ZXKeyboard
         // setup keydown and keyup events
         let self = this;
         eventReceiverElement.addEventListener('keydown', function(e) {
-            self._onKey(e.keyCode, true);
-            if (e.preventDefault)
+            const keyProcessed = self._onKey(e.keyCode, true);
+            if (keyProcessed && e.preventDefault)
                 e.preventDefault();
         });
         eventReceiverElement.addEventListener('keyup', function(e) {
-            //console.log(e);
-            self._onKey(e.keyCode, false);
-            if (e.preventDefault)
+            const keyProcessed = self._onKey(e.keyCode, false);
+            if (keyProcessed && e.preventDefault)
                 e.preventDefault();
         });
     }
@@ -87,7 +86,7 @@ class ZXKeyboard
     _onKey(keyCode, down)
     {
         // ignore keycodes absent from keycode table
-        if (!(keyCode in this.kctable)) return;
+        if (!(keyCode in this.kctable)) return false;
 
         // get port and bit for given key
         let kval = this.kctable[keyCode];
@@ -111,6 +110,8 @@ class ZXKeyboard
 
         // update port value
         this.kbbits[port] = pval;
+
+        return true;
     }
 
     // Get keyboard value for given port (negated masks allowed)

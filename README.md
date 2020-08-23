@@ -19,7 +19,7 @@ The project totals ~1200 lines of code`*` (including lots of comments and empty 
 
 ## Features
 - ZX Spectrum 48K emulation with original ROM.
-- Screen emulation with border, BRIGHT and FLASH attributes.
+- Screen emulation with border, BRIGHT and FLASH attributes. Controls for scaling screen.
 - Keyboard emulation, from DOM keydown/keyup events.
 - Sound emulation with 4x supersampling for clear beeper tunes.
 - SNA snapshot loading from local filesystem.

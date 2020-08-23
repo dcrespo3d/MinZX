@@ -22,21 +22,27 @@ body {
     text-align: center;
     color: #EEE;
     background-color: #777;
-    display: none;
+    visibility: hidden;
 }
     </style>
 </head>
 <body>
-    <p>MinZX - Minimalistic ZX Spectrum 48K emulator</p>
-    <p>Developed in 2020 by <a href="https://github.com/dcrespo3d">DCrespo</a>, see <a href="https://github.com/dcrespo3d/MinZX">source code</a></p>
     <canvas id=zxscreen></canvas>
     <br/><br/>
+    <button class=btnScale>1x</button>
+    <button class=btnScale>2x</button>
+    <button class=btnScale>3x</button>
+    <button class=btnScale>4x</button>
+    <button class=btnScale>5x</button>
+    <button class=btnScale>6x</button>
     <button id=btnReset>Reset</button>
     <button id=btnLoadSnaFile>Load Snapshot...</button>
     <button id=btnSaveQuickSna>Quick Save (F2)</button>
     <button id=btnLoadQuickSna>Quick Load (F3)</button>
     <br/>
-    <p id="statusmsg"></p>
+    <p id="statusmsg">status</p>
+    <p>MinZX - Minimalistic ZX Spectrum 48K emulator</p>
+    <p>Developed in 2020 by <a href="https://github.com/dcrespo3d">DCrespo</a>, see <a href="https://github.com/dcrespo3d/MinZX">source code</a></p>
 
     <script>
 /**/
@@ -67,12 +73,34 @@ window.addEventListener('load', function() {
 
     // chrome starts AudioContext in suspended state.
     let resumeOnce = true;
-    window.addEventListener('keydown', function(e) {
+    function wakeUpAudioInChrome() {
         if (resumeOnce) {
             resumeOnce = false;
             theAudioContext.resume();
         }
+    }
+
+    window.addEventListener('click', function(e) {
+        wakeUpAudioInChrome();
     });
+
+    window.addEventListener('keydown', function(e) {
+        wakeUpAudioInChrome();
+        preventDefaultKeys(e);
+    });
+
+    // quick save/load keys
+    window.addEventListener('keyup', function(e) {
+        if (e.key == 'F2') doQuickSave();
+        if (e.key == 'F3') doQuickLoad();
+        preventDefaultKeys(e);
+    });
+
+    function preventDefaultKeys(e) {
+        if (!e.preventDefault) return;
+        if (e.key == 'F2' || e.key == 'F3' || e.key == 'Backspace')
+            e.preventDefault();
+    }
 
     // load snapshot button
     const btnLoadSnaFile = document.getElementById('btnLoadSnaFile');
@@ -83,7 +111,7 @@ window.addEventListener('load', function() {
         }
         loadLocalFile(function(filename, data) {
             minzx.loadSNA(data);
-            displayStatus("Loaded Snapshot: " + filename);
+            displayStatus('Loaded Snapshot: ' + filename);
         });
     });
 
@@ -105,19 +133,19 @@ window.addEventListener('load', function() {
         enableQuickLoad(true);
         const snadata = minzx.saveSNA();
         if (snadata == null) {
-            displayStatus("Cannot Save Quick Snapshot");
+            displayStatus('Cannot Save Quick Snapshot');
             return;
         }
         const snapshot = { data: snadata };
         window.localStorage[quickSaveKey] = JSON.stringify(snapshot);
-        displayStatus("Saved Quick Snapshot");
+        displayStatus('Saved Quick Snapshot');
     }
 
     function doQuickLoad() {
         if (!quickLoadEnabled) return;
         const snapshot = JSON.parse(window.localStorage[quickSaveKey]);
         minzx.loadSNA(snapshot.data);
-        displayStatus("Loaded Quick Snapshot");
+        displayStatus('Loaded Quick Snapshot');
     }
 
     // quick save button
@@ -130,12 +158,6 @@ window.addEventListener('load', function() {
     const btnLoadQuickSna = document.getElementById('btnLoadQuickSna');
     btnLoadQuickSna.addEventListener('click', function() {
         doQuickLoad();
-    });
-
-    // quick save/load keys
-    window.addEventListener('keyup', function(e) {
-        if (e.key == "F2") doQuickSave();
-        if (e.key == "F3") doQuickLoad();
     });
 
     function enableQuickSave(enabled) { quickSaveEnabled = enabled; btnSaveQuickSna.style.display = enabled ? 'inline-block' : 'none'; }
@@ -156,12 +178,22 @@ window.addEventListener('load', function() {
     // status line
     function displayStatus(text) {
         const statusmsg = document.getElementById('statusmsg');
-        statusmsg.style.display = 'block';
+        statusmsg.style.visibility = 'visible';
         statusmsg.innerText = text;
         clearTimeout(idDisplayTimeout);
         idDisplayTimeout = setTimeout(function() {
-            statusmsg.style.display = 'none';    
+            statusmsg.style.visibility = 'hidden';    
         }, 2000);
+    }
+
+    // scale buttons
+    const btnScaleArr = document.getElementsByClassName('btnScale');
+    for (let i = 0; i < btnScaleArr.length; i++) {
+        const btnScale = btnScaleArr[i];
+        const scale = parseInt(btnScale.innerText);
+        btnScale.addEventListener('click', function() {
+            minzx._screen.setScale(scale);
+        });
     }
 });
 
