@@ -70,7 +70,7 @@ class MinZX
     // read from memory at address addr, return byte at that position
     _mem_read(addr) {
         let val = this.mem[addr];
-        this._emulate_contended_memory(addr);
+        this._emulate_contended_memory(addr, false);
         return val;
     }
 
@@ -79,7 +79,7 @@ class MinZX
         // make ROM read-only
         if (addr >= 0x4000)
             this.mem[addr] = val;
-        this._emulate_contended_memory(addr);
+        this._emulate_contended_memory(addr, true);
     }
 
     // read from Input port
@@ -122,11 +122,65 @@ class MinZX
     }
 
     // emulate contended memory
-    _emulate_contended_memory(addr) {
-        if (addr >= 0x4000 && addr < 0x8000) {
-            const heuristic_factor = 3;
-            this._cyclecount += heuristic_factor * this._ctmem_extra_cycles(this._cyclecount);
+    _emulate_contended_memory(addr, isWrite) {
+        if (addr < 0x4000 || addr >= 0x8000)
+            return;
+
+        if (this._emulate_contended_memory_special_cases(isWrite))
+            return;
+
+        this._cyclecount += this._ctmem_extra_cycles(this._cyclecount);
+    }
+
+    // special cases for some tricky instructions (incomplete and inexact)
+    _emulate_contended_memory_special_cases(isWrite) {
+        const state = this.cpu.getState();
+        const pc = state.pc;
+        const icurr = this.mem[pc];
+        const iprev = this.mem[pc-1];
+        if (!isWrite) {
+            if (iprev == 0xED) {
+                if (icurr == 0xB1 || icurr == 0xB9) {   // CPIR, CPDR
+                    this._emulate_1xN_wait_states(5);
+                    return true;
+                }
+                if (icurr == 0xB3 || icurr == 0xBB) {   // OTIR, OTDR
+                    this._emulate_1xN_wait_states(5);
+                    return true;
+                }
+            }
+            if (iprev == 0x10 || iprev == 0x20 || iprev == 0x30 ||  // DJNZ, JR*
+                iprev == 0x18 || iprev == 0x28 || iprev == 0x38) {
+                this._emulate_1xN_wait_states(5); 
+                return true;
+            }
         }
+        if (isWrite) {
+            if (iprev == 0xED) {
+                if (icurr == 0xA0 || icurr == 0xA8) {   // LDI, LDD
+                    this._emulate_1xN_wait_states(2);
+                    return true;
+                }
+                if (icurr == 0xB0 || icurr == 0xB8) {   // LDIR, LDDR
+                    this._emulate_1xN_wait_states(7);
+                    return true;
+                }
+                if (icurr == 0xB2 || icurr == 0xBA) {   // INIR, INDR
+                    this._emulate_1xN_wait_states(5);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // emulation for 1xN special cases
+    _emulate_1xN_wait_states(N) {
+        for (let i = 0; i < N; i++) {
+            this._cyclecount++;
+            this._cyclecount += this._ctmem_extra_cycles(this._cyclecount);
+        }
+        this._cyclecount -= (N-1);
     }
 
     // reference: https://worldofspectrum.org/faq/reference/48kreference.htm#ZXSpectrum
